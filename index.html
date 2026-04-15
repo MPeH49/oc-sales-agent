@@ -1,281 +1,1447 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OC Sales Agent — Blueprint</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OC — D2C Prototype</title>
+
+<!--
+  OXYGEN CONSERVATION — D2C PLATFORM PROTOTYPE (v1)
+  ---------------------------------------------------
+  Single-file HTML prototype. All data in-memory (no backend, no storage).
+  Visual system: 03_OC_Visual_Formatting_Spec.md
+  Language: 02_OC_Language_Playbook.md
+  Commercial: 01_Pitch_Deck_Content_Loop.md
+  Estate data: Woodland Carbon Timeline.xlsx
+  NOTES:
+    - Forma DJR is OC's real typeface (Adobe Fonts). Not embeddable in a standalone file,
+      so this prototype uses Inter (Google Fonts) as a close proxy. Same geometric sans,
+      same weight range. Swap to Forma DJR for production — no structural changes needed.
+    - Imagery: Unsplash CC0 landscape photography as placeholders. All labelled.
+      For production, swap to OC's own estate drone footage and LiDAR renders.
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'DM Sans','Helvetica Neue',sans-serif;background:#fff;color:#1a1a1a;line-height:1.6;-webkit-font-smoothing:antialiased}
-.mono{font-family:'DM Mono',monospace}
+  /* =========================================================
+     TOKENS — pulled directly from 03_OC_Visual_Formatting_Spec.md
+     ========================================================= */
+  :root {
+    --ink: #00131F;
+    --slab-navy: #1B282D;
+    --deep-slab: #151F23;
+    --paper: #FFFFFF;
+    --link-blue: #5AB2F1;
+    --hairline: rgba(0, 19, 31, 0.12);
+    --hairline-light: rgba(255, 255, 255, 0.22);
 
-.header{padding:48px 40px 36px;border-bottom:1px solid #eee}
-.header .tag{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;color:#1A7A5C;text-transform:uppercase;margin-bottom:8px;font-weight:500}
-.header h1{font-size:28px;font-weight:300;line-height:1.3;color:#111}
-.header h1 strong{font-weight:700}
-.header p{font-size:14px;color:#888;margin-top:10px;max-width:560px}
+    --font-sans: 'Inter', 'Helvetica', 'Arial', sans-serif; /* Forma DJR proxy */
+    --ls-body: 0.04em;   /* 1px at 18px */
+    --ls-eyebrow: 0.12em;
 
-/* Module cards grid */
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:32px 40px}
-@media(max-width:640px){.cards{grid-template-columns:1fr;padding:24px 20px}}
+    --side: clamp(24px, 5vw, 96px);
+  }
 
-.card{
-  padding:24px;border-radius:12px;cursor:pointer;
-  border:2px solid #f0f0f0;transition:all .2s ease;position:relative;overflow:hidden;
-}
-.card:hover{border-color:#ddd;transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,0.06)}
-.card.active{border-color:var(--c);box-shadow:0 4px 24px rgba(0,0,0,0.08)}
-.card-num{font-family:'DM Mono',monospace;font-size:32px;font-weight:300;opacity:.15;position:absolute;top:16px;right:20px}
-.card-title{font-size:15px;font-weight:600;margin-bottom:6px;color:#1a1a1a}
-.card-desc{font-size:12px;color:#888;line-height:1.5}
-.card-dot{width:8px;height:8px;border-radius:50%;margin-bottom:12px}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--paper); color: var(--ink); font-family: var(--font-sans); font-weight: 300; font-size: 18px; line-height: 1.4; letter-spacing: var(--ls-body); -webkit-font-smoothing: antialiased; }
+  img { display: block; max-width: 100%; }
+  a { color: var(--link-blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { font: inherit; letter-spacing: inherit; color: inherit; }
+  input, select { font: inherit; letter-spacing: inherit; }
 
-/* Flow arrows between cards */
-.flow-hint{text-align:center;padding:0 40px 24px;font-family:'DM Mono',monospace;font-size:11px;color:#ccc;letter-spacing:.5px}
+  /* Flat text-underline CTA — OC signature */
+  .cta {
+    display: inline-block;
+    background: transparent;
+    border: 0;
+    padding: 14px 0;
+    text-transform: uppercase;
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: var(--ls-eyebrow);
+    border-bottom: 1px solid currentColor;
+    cursor: pointer;
+    transition: opacity .2s ease;
+  }
+  .cta:hover { opacity: 0.6; }
+  .cta--light { color: var(--paper); }
 
-/* Detail panel */
-.detail{padding:0 40px 48px;display:none;animation:slideUp .3s ease}
-@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@media(max-width:640px){.detail{padding:0 20px 40px}}
+  /* Eyebrow label */
+  .eyebrow { text-transform: uppercase; font-weight: 500; font-size: 15px; letter-spacing: var(--ls-eyebrow); }
 
-.detail-header{display:flex;align-items:flex-start;gap:16px;padding:32px 0 20px;border-top:1px solid #eee}
-.detail-num{font-family:'DM Mono',monospace;font-size:36px;font-weight:300;opacity:.12;line-height:1}
-.detail-title{font-size:20px;font-weight:600;color:#1a1a1a}
-.detail-folder{font-family:'DM Mono',monospace;font-size:11px;color:#aaa;margin-top:3px}
-.detail-desc{font-size:13px;color:#666;line-height:1.7;margin-bottom:20px;max-width:600px}
+  /* =========================================================
+     NAV
+     ========================================================= */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px var(--side);
+    background: rgba(255,255,255,0.0);
+    color: var(--paper);
+    transition: background .3s ease, color .3s ease, border-color .3s ease;
+    border-bottom: 1px solid transparent;
+  }
+  .nav--scrolled { background: var(--paper); color: var(--ink); border-bottom-color: var(--hairline); }
+  .nav__logo { font-weight: 500; text-transform: uppercase; letter-spacing: var(--ls-eyebrow); font-size: 15px; }
+  .nav__links { display: flex; gap: 28px; }
+  .nav__link { color: inherit; font-size: 15px; font-weight: 500; text-transform: uppercase; letter-spacing: var(--ls-eyebrow); cursor: pointer; background: none; border: 0; padding: 0; }
+  .nav__link--active { border-bottom: 1px solid currentColor; }
+  @media (max-width: 1100px) { .nav__links { gap: 18px; } .nav__link { font-size: 13px; } }
+  @media (max-width: 900px) { .nav__logo { display: none; } .nav__links { gap: 14px; } .nav__link { font-size: 11px; letter-spacing: 0.06em; } }
+  @media (max-width: 600px) { .nav { padding: 14px 16px; } .nav__links { gap: 10px; flex-wrap: wrap; justify-content: center; } .nav__link { font-size: 10px; } }
 
-.proto-note{background:#FFFBF0;border:1px solid #F0E6CC;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#8B7A55;line-height:1.6}
-.proto-note strong{color:#A68A4B;font-weight:600}
+  /* =========================================================
+     FORMS (Gift, Business, Criticise)
+     ========================================================= */
+  .form { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; }
+  @media (max-width: 900px) { .form { grid-template-columns: 1fr; gap: 40px; } }
+  .form .field input[type=email], .form .field input[type=text], .form .field textarea {
+    background: transparent; color: inherit;
+    border: 0; border-bottom: 1px solid var(--hairline);
+    padding: 12px 0; width: 100%;
+    font-size: 18px; font-family: inherit; letter-spacing: inherit;
+  }
+  .form .field textarea { min-height: 120px; resize: vertical; }
+  .form--dark .field input, .form--dark .field textarea, .form--dark .field select {
+    border-bottom-color: var(--hairline-light);
+    color: var(--paper);
+  }
+  .form--dark .field input::placeholder, .form--dark .field textarea::placeholder { color: rgba(255,255,255,0.4); }
 
-/* Tabs */
-.tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
-.tab-btn{
-  padding:8px 16px;border-radius:8px;border:1px solid #eee;
-  background:#fafafa;color:#888;font-size:12px;cursor:pointer;
-  font-family:'DM Sans',sans-serif;transition:all .15s;font-weight:500;
-}
-.tab-btn:hover{border-color:#ddd;color:#555}
-.tab-btn.active{background:#fff;color:#1a1a1a;border-color:#ccc;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+  /* Certificate preview — gift page */
+  .cert {
+    background: var(--paper); color: var(--ink);
+    border: 1px solid var(--ink);
+    padding: 40px;
+    aspect-ratio: 7/5;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative;
+  }
+  .cert__hd { display: flex; justify-content: space-between; font-size: 11px; letter-spacing: var(--ls-eyebrow); text-transform: uppercase; font-weight: 500; opacity: 0.6; }
+  .cert__title { font-size: clamp(24px, 3vw, 36px); font-weight: 500; line-height: 1.15; max-width: 80%; }
+  .cert__recipient { font-size: 18px; font-weight: 300; margin-top: 16px; opacity: 0.75; }
+  .cert__ft { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; font-size: 11px; letter-spacing: var(--ls-eyebrow); text-transform: uppercase; font-weight: 500; opacity: 0.65; }
+  .cert__ft div span { display: block; font-size: 14px; opacity: 1; font-weight: 300; letter-spacing: 0.04em; text-transform: none; margin-top: 4px; }
 
-.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;color:#bbb;text-transform:uppercase;margin-bottom:12px;font-weight:500}
+  /* Timeline (About page) */
+  .timeline { border-left: 1px solid var(--hairline); padding-left: 40px; margin-top: 60px; }
+  .timeline__item { padding-bottom: 48px; position: relative; }
+  .timeline__item::before { content: ''; position: absolute; left: -45px; top: 8px; width: 9px; height: 9px; background: var(--ink); }
+  .timeline__year { font-size: 40px; font-weight: 300; line-height: 1; margin-bottom: 16px; }
+  .timeline__title { text-transform: uppercase; font-size: 13px; letter-spacing: var(--ls-eyebrow); font-weight: 500; margin-bottom: 12px; }
+  .timeline__body { font-size: 17px; font-weight: 300; line-height: 1.5; max-width: 640px; }
 
-/* Files */
-.file-row{padding:10px 14px;background:#fafafa;border-radius:6px;margin-bottom:4px;display:flex;gap:10px;align-items:flex-start;font-size:12px;border:1px solid #f0f0f0}
-.file-name{font-family:'DM Mono',monospace;white-space:nowrap;flex-shrink:0;font-weight:500}
-.file-desc{color:#888;line-height:1.5}
+  /* Critique list */
+  .critique { border-top: 1px solid var(--hairline); padding: 28px 0; display: grid; grid-template-columns: 160px 1fr; gap: 32px; }
+  @media (max-width: 720px) { .critique { grid-template-columns: 1fr; gap: 8px; } }
+  .critique__meta { font-size: 12px; text-transform: uppercase; letter-spacing: var(--ls-eyebrow); font-weight: 500; opacity: 0.6; }
+  .critique__body h4 { font-size: 20px; font-weight: 500; margin-bottom: 8px; }
+  .critique__body p { font-size: 16px; font-weight: 300; opacity: 0.8; line-height: 1.5; }
+  .critique__body .resp { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hairline); font-size: 14px; opacity: 0.75; }
 
-/* Code block */
-.code-block{background:#fafafa;border-radius:8px;padding:20px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.9;color:#555;white-space:pre-wrap;border:1px solid #eee}
-.code-note{font-size:11px;color:#bbb;margin-top:10px}
+  /* =========================================================
+     PAGE SHELL
+     ========================================================= */
+  .page { display: none; }
+  .page--active { display: block; }
 
-/* Scheduled */
-.sched-card{padding:12px 16px;background:#fafafa;border-radius:8px;margin-bottom:6px;border-left:3px solid var(--c,#1A7A5C);border-right:1px solid #f0f0f0;border-top:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0}
-.sched-freq{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:500}
-.sched-desc{font-size:12px;color:#555;margin-top:4px;line-height:1.5}
+  /* =========================================================
+     HERO
+     ========================================================= */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    color: var(--paper);
+    background: var(--deep-slab);
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+  .hero__bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    filter: brightness(0.55);
+  }
+  /* Home hero — Scottish highlands. Unsplash CC0. */
+  .hero--home .hero__bg { background-image: url('https://images.unsplash.com/photo-1533387520709-752d83de3630?auto=format&fit=crop&w=2400&q=80'); }
+  /* Estate hero — moorland / peat. Unsplash CC0. */
+  .hero--estate .hero__bg { background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2400&q=80'); }
+  .hero__content {
+    position: relative; z-index: 2;
+    padding: 0 var(--side) 10vh var(--side);
+    max-width: 1200px;
+  }
+  .hero__eyebrow { margin-bottom: 28px; opacity: 0.85; }
+  .hero__title {
+    font-size: clamp(48px, 7vw, 96px);
+    font-weight: 300;
+    text-transform: uppercase;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    margin-bottom: 32px;
+  }
+  .hero__sub { font-size: 18px; max-width: 560px; margin-bottom: 40px; opacity: 0.9; }
 
-/* Output */
-.output-box{font-size:13px;color:#555;line-height:1.7;padding:16px;border-radius:8px;background:#fafafa;border:1px solid #f0f0f0}
+  /* =========================================================
+     STATEMENT SLAB
+     ========================================================= */
+  .slab { padding: clamp(80px, 14vh, 160px) var(--side); }
+  .slab--dark { background: var(--slab-navy); color: var(--paper); }
+  .slab--deep { background: var(--deep-slab); color: var(--paper); }
+  .slab__statement {
+    font-size: clamp(32px, 4.5vw, 60px);
+    font-weight: 500;
+    line-height: 1.12;
+    max-width: 1100px;
+  }
+  .slab__statement .muted { font-weight: 300; opacity: 0.55; }
+  .slab__lede {
+    font-size: 20px;
+    font-weight: 300;
+    line-height: 1.5;
+    max-width: 720px;
+    margin-top: 28px;
+  }
+  .slab__actions { margin-top: 40px; display: flex; gap: 32px; flex-wrap: wrap; }
 
-/* Close button */
-.close-btn{background:none;border:1px solid #eee;color:#aaa;font-size:12px;cursor:pointer;padding:6px 14px;border-radius:6px;font-family:'DM Sans',sans-serif;transition:all .15s;float:right}
-.close-btn:hover{border-color:#ccc;color:#666}
+  /* =========================================================
+     STAT TILES (signature OC component)
+     ========================================================= */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0; background: var(--slab-navy); color: var(--paper); }
+  .stat { position: relative; min-height: 440px; padding: 40px; display: flex; flex-direction: column; justify-content: flex-end; color: var(--paper); overflow: hidden; }
+  .stat__bg { position: absolute; inset: 0; background-size: cover; background-position: center; filter: brightness(0.5); z-index: 0; }
+  .stat > * { position: relative; z-index: 1; }
+  .stat__number { font-size: clamp(44px, 5vw, 60px); font-weight: 500; line-height: 1; margin-bottom: 12px; }
+  .stat__desc { font-size: 18px; font-weight: 300; max-width: 340px; margin-bottom: 28px; }
+  .stat__label { text-transform: uppercase; font-weight: 500; font-size: 13px; letter-spacing: var(--ls-eyebrow); padding-bottom: 8px; border-bottom: 1px solid var(--hairline-light); display: inline-block; }
+
+  /* Estate stat cards — specific photos */
+  .stat--acres .stat__bg { background-image: url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1600&q=80'); }
+  .stat--credits .stat__bg { background-image: url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1600&q=80'); }
+  .stat--price .stat__bg { background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1600&q=80'); }
+  .stat--vintages .stat__bg { background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=80'); }
+  .stat--trees .stat__bg { background-image: url('https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1600&q=80'); }
+  .stat--lidar .stat__bg { background-image: url('https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?auto=format&fit=crop&w=1600&q=80'); }
+
+  /* =========================================================
+     PROCESS (four-stage)
+     ========================================================= */
+  .process { padding: clamp(80px, 12vh, 140px) var(--side); background: var(--paper); color: var(--ink); }
+  .process__title { font-size: clamp(28px, 3.5vw, 40px); font-weight: 500; margin-bottom: 60px; max-width: 900px; }
+  .process__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 40px; }
+  .process__step h4 { text-transform: uppercase; font-weight: 500; font-size: 14px; letter-spacing: var(--ls-eyebrow); padding-bottom: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--hairline); }
+  .process__step p { font-size: 17px; font-weight: 300; line-height: 1.5; }
+  .process__step__num { display: block; font-size: 14px; font-weight: 500; margin-bottom: 14px; opacity: 0.5; }
+
+  /* =========================================================
+     TIERS
+     ========================================================= */
+  .tiers { padding: clamp(80px, 12vh, 140px) var(--side); background: var(--paper); color: var(--ink); }
+  .tiers__intro { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 32px; margin-bottom: 60px; }
+  .tiers__title { font-size: clamp(32px, 4.5vw, 56px); font-weight: 500; line-height: 1.12; max-width: 800px; }
+  .tiers__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0; border-top: 1px solid var(--hairline); }
+  .tier { padding: 40px 32px; border-right: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); display: flex; flex-direction: column; cursor: pointer; transition: background .2s ease; }
+  .tier:last-child { border-right: 0; }
+  .tier:hover, .tier--active { background: var(--ink); color: var(--paper); }
+  .tier__eyebrow { text-transform: uppercase; font-weight: 500; font-size: 13px; letter-spacing: var(--ls-eyebrow); margin-bottom: 20px; opacity: 0.6; }
+  .tier__name { font-size: 36px; font-weight: 500; margin-bottom: 24px; line-height: 1.1; }
+  .tier__price { font-size: 44px; font-weight: 300; margin-bottom: 8px; }
+  .tier__price small { font-size: 18px; opacity: 0.65; font-weight: 300; }
+  .tier__price-note { font-size: 14px; opacity: 0.6; margin-bottom: 28px; }
+  .tier__desc { font-size: 16px; font-weight: 300; line-height: 1.5; margin-bottom: 24px; flex: 1; }
+  .tier__specs { list-style: none; padding: 0; font-size: 14px; margin-bottom: 28px; }
+  .tier__specs li { padding: 10px 0; border-top: 1px solid currentColor; opacity: 0.75; display: flex; justify-content: space-between; gap: 12px; }
+  .tier__specs li:last-child { border-bottom: 1px solid currentColor; }
+  .tier__cta { margin-top: auto; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: var(--ls-eyebrow); padding-bottom: 6px; border-bottom: 1px solid currentColor; align-self: flex-start; }
+
+  @media (max-width: 900px) { .tier { border-right: 0; } }
+
+  /* =========================================================
+     CALCULATOR + CHECKOUT
+     ========================================================= */
+  .calc { padding: clamp(80px, 12vh, 140px) var(--side); background: var(--deep-slab); color: var(--paper); }
+  .calc__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: flex-start; }
+  @media (max-width: 900px) { .calc__grid { grid-template-columns: 1fr; gap: 48px; } }
+  .calc__title { font-size: clamp(28px, 4vw, 48px); font-weight: 500; margin-bottom: 32px; line-height: 1.15; }
+  .calc__lede { font-size: 18px; font-weight: 300; opacity: 0.75; margin-bottom: 40px; max-width: 460px; }
+
+  .field { margin-bottom: 28px; }
+  .field label { display: block; text-transform: uppercase; font-size: 12px; font-weight: 500; letter-spacing: var(--ls-eyebrow); margin-bottom: 10px; opacity: 0.8; }
+  .field__value { font-size: 32px; font-weight: 300; margin-bottom: 8px; }
+  .field input[type=range] { width: 100%; accent-color: var(--paper); margin-top: 10px; }
+  .field select, .field input[type=text] {
+    background: transparent; color: var(--paper);
+    border: 0; border-bottom: 1px solid var(--hairline-light);
+    padding: 10px 0; width: 100%;
+    font-size: 18px;
+  }
+  .field select option { background: var(--deep-slab); color: var(--paper); }
+
+  .summary {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--hairline-light);
+    padding: 32px;
+  }
+  .summary__row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--hairline-light); font-size: 15px; }
+  .summary__row:last-child { border-bottom: 0; }
+  .summary__row .label { opacity: 0.65; text-transform: uppercase; font-size: 12px; letter-spacing: var(--ls-eyebrow); font-weight: 500; }
+  .summary__row .value { font-weight: 500; }
+  .summary__total { font-size: 32px; font-weight: 300; padding: 20px 0 4px; border-bottom: 0; }
+  .summary__total .value { font-size: 44px; }
+  .summary__note { font-size: 13px; opacity: 0.6; margin-top: 16px; line-height: 1.5; }
+
+  /* =========================================================
+     DASHBOARD (My Impact)
+     ========================================================= */
+  .dash { background: var(--paper); color: var(--ink); padding: clamp(80px, 12vh, 140px) var(--side); }
+  .dash__hd { margin-bottom: 60px; }
+  .dash__hd h1 { font-size: clamp(32px, 4.5vw, 56px); font-weight: 500; line-height: 1.1; max-width: 900px; }
+  .dash__hd p { font-size: 18px; opacity: 0.7; margin-top: 20px; max-width: 560px; }
+
+  .dash__grid { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; margin-bottom: 60px; }
+  @media (max-width: 900px) { .dash__grid { grid-template-columns: 1fr; } }
+
+  .dash__map {
+    aspect-ratio: 16/10;
+    background:
+      radial-gradient(ellipse at 35% 45%, rgba(90,178,241,0.18) 0%, transparent 45%),
+      linear-gradient(180deg, #1B282D 0%, #00131F 100%);
+    color: var(--paper);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .dash__map::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0.6;
+  }
+  .dash__pin {
+    position: absolute;
+    top: 44%; left: 36%;
+    width: 18px; height: 18px;
+    background: var(--link-blue);
+    border-radius: 50%; /* only round element on the site — the geo-pin */
+    box-shadow: 0 0 0 6px rgba(90,178,241,0.25), 0 0 0 12px rgba(90,178,241,0.12);
+  }
+  .dash__pin-label {
+    position: absolute;
+    top: calc(44% - 30px); left: calc(36% + 24px);
+    color: var(--paper);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: var(--ls-eyebrow);
+    font-weight: 500;
+  }
+  .dash__map__title { position: relative; z-index: 2; text-transform: uppercase; font-size: 13px; letter-spacing: var(--ls-eyebrow); font-weight: 500; }
+  .dash__map__foot { position: relative; z-index: 2; font-size: 12px; opacity: 0.6; letter-spacing: var(--ls-eyebrow); text-transform: uppercase; }
+
+  .dash__side h3 { text-transform: uppercase; font-size: 12px; letter-spacing: var(--ls-eyebrow); font-weight: 500; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--hairline); }
+  .dash__metric { padding: 16px 0; border-bottom: 1px solid var(--hairline); }
+  .dash__metric__v { font-size: 32px; font-weight: 500; line-height: 1; }
+  .dash__metric__l { font-size: 13px; opacity: 0.65; margin-top: 6px; }
+
+  .dash__credits { border-top: 1px solid var(--hairline); }
+  .dash__credits h2 { text-transform: uppercase; font-size: 13px; letter-spacing: var(--ls-eyebrow); font-weight: 500; padding: 40px 0 24px; }
+  .dash__credits table { width: 100%; border-collapse: collapse; }
+  .dash__credits th, .dash__credits td { text-align: left; padding: 18px 0; border-bottom: 1px solid var(--hairline); font-size: 15px; font-weight: 300; }
+  .dash__credits th { text-transform: uppercase; font-size: 12px; letter-spacing: var(--ls-eyebrow); font-weight: 500; opacity: 0.65; }
+
+  /* =========================================================
+     FOOTER
+     ========================================================= */
+  footer { background: var(--deep-slab); color: var(--paper); padding: 80px var(--side) 40px; }
+  footer .foot__grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 60px; }
+  @media (max-width: 720px) { footer .foot__grid { grid-template-columns: 1fr; gap: 32px; } }
+  footer h4 { text-transform: uppercase; font-size: 13px; letter-spacing: var(--ls-eyebrow); font-weight: 500; margin-bottom: 18px; opacity: 0.6; }
+  footer a { color: var(--paper); display: block; padding: 6px 0; font-size: 15px; }
+  footer .foot__bottom { border-top: 1px solid var(--hairline-light); padding-top: 24px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; font-size: 13px; opacity: 0.6; text-transform: uppercase; letter-spacing: var(--ls-eyebrow); font-weight: 500; }
+
+  /* Scroll cue */
+  .scroll-cue { position: absolute; bottom: 32px; left: var(--side); color: var(--paper); font-size: 13px; text-transform: uppercase; letter-spacing: var(--ls-eyebrow); font-weight: 500; opacity: 0.75; z-index: 2; }
+
+  /* Tag pill for vintages — sharp, not rounded */
+  .tag { display: inline-block; padding: 4px 10px; border: 1px solid currentColor; font-size: 12px; text-transform: uppercase; letter-spacing: var(--ls-eyebrow); font-weight: 500; }
 </style>
 </head>
+
 <body>
 
-<div class="header">
-  <div class="tag">Oxygen Conservation</div>
-  <h1><strong>Sales Agent</strong> Blueprint</h1>
-  <p>Four Claude Cowork Projects, each with its own knowledge base, system prompt, scheduled tasks, and scoped memory.</p>
-</div>
-
-<div class="cards" id="cards">
-  <div class="card" id="card-0" onclick="selectModule(0)" style="--c:#1A7A5C">
-    <div class="card-num">01</div>
-    <div class="card-dot" style="background:#1A7A5C"></div>
-    <div class="card-title">D2C carbon credit sales</div>
-    <div class="card-desc">Customer-facing prototype. Sells credits to individuals, qualifies buyers, escalates UHNW leads.</div>
+<!-- ==========================================================
+     NAV
+     ========================================================== -->
+<nav class="nav" id="nav">
+  <div class="nav__logo">Oxygen Conservation</div>
+  <div class="nav__links">
+    <button class="nav__link nav__link--active" data-page="home">Home</button>
+    <button class="nav__link" data-page="estate">The Land</button>
+    <button class="nav__link" data-page="buy">Buy</button>
+    <button class="nav__link" data-page="gift">Gift</button>
+    <button class="nav__link" data-page="business">For Business</button>
+    <button class="nav__link" data-page="impact">My Impact</button>
+    <button class="nav__link" data-page="about">About</button>
+    <button class="nav__link" data-page="criticise">Criticise Us</button>
   </div>
-  <div class="card" id="card-1" onclick="selectModule(1)" style="--c:#5B52B0">
-    <div class="card-num">02</div>
-    <div class="card-dot" style="background:#5B52B0"></div>
-    <div class="card-title">Investor research + targeting</div>
-    <div class="card-desc">Profiles key investor segments (e.g. Foresight 68). Identifies contacts. Maps warm intros.</div>
-  </div>
-  <div class="card" id="card-2" onclick="selectModule(2)" style="--c:#C04E25">
-    <div class="card-num">03</div>
-    <div class="card-dot" style="background:#C04E25"></div>
-    <div class="card-title">Outreach + relationship building</div>
-    <div class="card-desc">Drafts emails, LinkedIn messages, call prep notes, and follow-up sequences.</div>
-  </div>
-  <div class="card" id="card-3" onclick="selectModule(3)" style="--c:#A06B14">
-    <div class="card-num">04</div>
-    <div class="card-dot" style="background:#A06B14"></div>
-    <div class="card-title">Commercial strategy + planning</div>
-    <div class="card-desc">Stress-tests the Head of Commercial hire. Models the buyer &rarr; investor pipeline.</div>
-  </div>
-</div>
+</nav>
 
-<div class="flow-hint">01 &rarr; UHNW leads feed into 02 &rarr; targets feed into 03 &rarr; learnings shape 04</div>
+<!-- ==========================================================
+     PAGE: HOME
+     ========================================================== -->
+<main class="page page--active" id="page-home">
 
-<div class="detail" id="detail"></div>
+  <section class="hero hero--home">
+    <div class="hero__bg"></div>
+    <div class="hero__content">
+      <p class="hero__eyebrow">Premium UK Nature-Based Credits</p>
+      <h1 class="hero__title">Proof You Can<br/>Walk On</h1>
+      <p class="hero__sub">Every credit traceable to a geo-tagged tree or hectare of peatland. On land we own. Priced at the Curve.</p>
+      <button class="cta cta--light" data-page="estate">Visit an Estate</button>
+      &nbsp;&nbsp;&nbsp;
+      <button class="cta cta--light" data-page="buy">Choose a Tier</button>
+    </div>
+    <div class="scroll-cue">Scroll ↓</div>
+  </section>
 
+  <section class="slab">
+    <p class="eyebrow" style="margin-bottom: 28px; opacity: 0.6;">Not All Carbon Credits Are Equal</p>
+    <h2 class="slab__statement">
+      Premium UK nature-based carbon credits. On land we own. <span class="muted">That you can walk on.</span>
+    </h2>
+    <p class="slab__lede">
+      Our credits are not abstract offsets. They are the result of measurable, long-term change across landscapes we own and manage — independently rated as the best quality credits available in the market.
+    </p>
+    <div class="slab__actions">
+      <button class="cta" data-page="estate">Explore the Land</button>
+      <button class="cta" data-page="buy">How It Works</button>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stat stat--acres">
+      <div class="stat__bg"></div>
+      <p class="stat__number">50,000</p>
+      <p class="stat__desc">acres of UK land owned and managed for conservation</p>
+      <span class="stat__label">Portfolio</span>
+    </div>
+    <div class="stat stat--credits">
+      <div class="stat__bg"></div>
+      <p class="stat__number">2M+</p>
+      <p class="stat__desc">premium UK nature-based credits across woodland and peatland</p>
+      <span class="stat__label">Inventory</span>
+    </div>
+    <div class="stat stat--price">
+      <div class="stat__bg"></div>
+      <p class="stat__number">£125/t</p>
+      <p class="stat__desc">world-record price set for UK Woodland Carbon Credits, 2025</p>
+      <span class="stat__label">Pricing Benchmark</span>
+    </div>
+  </section>
+
+  <section class="slab slab--dark">
+    <p class="eyebrow" style="margin-bottom: 28px; opacity: 0.6;">Proof, Not Promise</p>
+    <h2 class="slab__statement">
+      Every other consumer carbon platform sells <span class="muted">intent.</span><br/>
+      We sell proof — on land we own, and you can walk on.
+    </h2>
+    <div class="slab__actions">
+      <button class="cta cta--light" data-page="estate">Visit Invergeldie</button>
+    </div>
+  </section>
+
+  <section class="process">
+    <p class="eyebrow" style="margin-bottom: 28px; opacity: 0.55;">How We Build Natural Capital</p>
+    <h3 class="process__title">Every credit we generate is traceable to measurable change on land we own.</h3>
+    <div class="process__grid">
+      <div class="process__step">
+        <span class="process__step__num">01</span>
+        <h4>Identification</h4>
+        <p>AI and data systems identify highly degraded landscapes where restoration will have the greatest impact.</p>
+      </div>
+      <div class="process__step">
+        <span class="process__step__num">02</span>
+        <h4>Masterplanning</h4>
+        <p>Bespoke schemes designed with communities, ecologists, and Government agencies, estate by estate.</p>
+      </div>
+      <div class="process__step">
+        <span class="process__step__num">03</span>
+        <h4>Delivery</h4>
+        <p>Peatland restoration, river rewilding, and woodland creation — treated as critical national infrastructure.</p>
+      </div>
+      <div class="process__step">
+        <span class="process__step__num">04</span>
+        <h4>MRV</h4>
+        <p>Centimetre-level LiDAR measures every tonne of carbon stored within each individual tree.</p>
+      </div>
+      <div class="process__step">
+        <span class="process__step__num">05</span>
+        <h4>Impact</h4>
+        <p>Annual reports and dashboards. Nine UN SDGs tracked. Every step of the chain verifiable.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==========================================================
+     PAGE: THE LAND — INVERGELDIE
+     ========================================================== -->
+<main class="page" id="page-estate">
+
+  <section class="hero hero--estate">
+    <div class="hero__bg"></div>
+    <div class="hero__content">
+      <p class="hero__eyebrow">Estate · Perthshire, Scotland</p>
+      <h1 class="hero__title">Invergeldie</h1>
+      <p class="hero__sub">11,701 acres of Highland landscape — peatland, native woodland, upland habitat. The foundation of OC's Scottish portfolio.</p>
+      <button class="cta cta--light" data-page="buy">Buy From This Estate</button>
+    </div>
+  </section>
+
+  <section class="slab">
+    <p class="eyebrow" style="margin-bottom: 28px; opacity: 0.6;">The Place</p>
+    <h2 class="slab__statement">
+      A 11,701-acre Highland estate, acquired 2022. <span class="muted">Now restoring itself.</span>
+    </h2>
+    <p class="slab__lede">
+      Invergeldie sits in the foothills of the southern Cairngorms. A mosaic of blanket bog, native woodland regeneration sites, and upland habitat — masterplanned for landscape-scale recovery and instrumented for end-to-end MRV by our Oxygen Intelligence platform.
+    </p>
+  </section>
+
+  <section class="stats">
+    <div class="stat stat--acres">
+      <div class="stat__bg"></div>
+      <p class="stat__number">11,701</p>
+      <p class="stat__desc">acres of Highland landscape</p>
+      <span class="stat__label">Footprint</span>
+    </div>
+    <div class="stat stat--credits">
+      <div class="stat__bg"></div>
+      <p class="stat__number">486,813</p>
+      <p class="stat__desc">lifetime premium credits — 381,406 woodland, 105,407 peatland</p>
+      <span class="stat__label">Inventory</span>
+    </div>
+    <div class="stat stat--vintages">
+      <div class="stat__bg"></div>
+      <p class="stat__number">2027–2080</p>
+      <p class="stat__desc">verified vintages across a 53-year delivery window</p>
+      <span class="stat__label">Timeline</span>
+    </div>
+    <div class="stat stat--trees">
+      <div class="stat__bg"></div>
+      <p class="stat__number">LiDAR</p>
+      <p class="stat__desc">every tree geo-tagged, measured in centimetres</p>
+      <span class="stat__label">Verification</span>
+    </div>
+  </section>
+
+  <section class="process">
+    <p class="eyebrow" style="margin-bottom: 28px; opacity: 0.55;">Available From This Estate</p>
+    <h3 class="process__title">Verified credits and pending issuance units, by vintage.</h3>
+    <div class="process__grid" id="estate-inventory">
+      <!-- Populated by JS -->
+    </div>
+  </section>
+
+  <section class="slab slab--dark">
+    <p class="eyebrow cta--light" style="margin-bottom: 28px; opacity: 0.6;">Oxygen Escapes</p>
+    <h2 class="slab__statement">
+      Visit the land you invested in. <span class="muted">Walk the estate. Meet the team. Proof you can touch.</span>
+    </h2>
+    <p class="slab__lede">
+      Tier 2 and Tier 3 buyers can pair their credit with a stay at Oxygen Escapes — the ecotourism properties on the estates where your credits are generated.
+    </p>
+    <div class="slab__actions">
+      <button class="cta cta--light" data-page="buy">Buy a Credit From Invergeldie</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==========================================================
+     PAGE: BUY — TIERS + CALCULATOR + CHECKOUT
+     ========================================================== -->
+<main class="page" id="page-buy">
+
+  <section class="tiers" style="padding-top: 140px;">
+    <div class="tiers__intro">
+      <h1 class="tiers__title">Three tiers. One promise. Every credit underpinned by Oxygen Intelligence.</h1>
+      <p class="eyebrow" style="opacity: 0.6;">Pricing anchored to the OC Carbon Curve</p>
+    </div>
+
+    <div class="tiers__grid" id="tier-grid">
+      <!-- Populated by JS -->
+    </div>
+  </section>
+
+  <section class="calc">
+    <div class="calc__grid">
+      <div>
+        <p class="eyebrow" style="opacity: 0.6; margin-bottom: 24px;">Your Selection</p>
+        <h2 class="calc__title" id="calc-title">Start with your household footprint.</h2>
+        <p class="calc__lede">UK average is 26 tonnes CO₂e per household per year. Adjust to match yours.</p>
+
+        <div class="field">
+          <label for="household-size">Household size</label>
+          <div class="field__value"><span id="hh-size-val">3</span> people</div>
+          <input type="range" id="household-size" min="1" max="6" value="3" />
+        </div>
+
+        <div class="field">
+          <label for="lifestyle">Lifestyle emissions</label>
+          <select id="lifestyle">
+            <option value="low">Low (flights rare, mostly plant-based, small home)</option>
+            <option value="average" selected>UK Average</option>
+            <option value="high">High (regular flights, large home, meat-heavy)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Your estimated annual footprint</label>
+          <div class="field__value"><span id="footprint-val">26</span> tCO₂e / year</div>
+        </div>
+
+        <div class="field">
+          <label for="tier-select">Choose a tier</label>
+          <select id="tier-select">
+            <option value="plot">The Plot — a single verified credit (£95)</option>
+            <option value="household" selected>The Household — full footprint offset</option>
+            <option value="legacy">The Legacy — 5-year forward commitment</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="estate-select">Source estate</label>
+          <select id="estate-select">
+            <option value="invergeldie" selected>Invergeldie — 11,701 acres, Perthshire</option>
+            <option value="dorback">Dorback — Cairngorms, Scotland</option>
+            <option value="bh">Blackburn &amp; Hartsgarth — Scottish Borders</option>
+            <option value="kinrara">Kinrara — Cairngorms, Scotland</option>
+            <option value="esgair">Esgair Arth — Ceredigion, Wales</option>
+            <option value="siblyback">Siblyback — Cornwall</option>
+            <option value="wood-advent">Wood Advent — Somerset</option>
+            <option value="swineley">Swineley — Yorkshire Dales</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <p class="eyebrow" style="opacity: 0.6; margin-bottom: 24px;">Your Credit</p>
+        <div class="summary" id="summary">
+          <div class="summary__row">
+            <span class="label">Tier</span>
+            <span class="value" id="sum-tier">The Household</span>
+          </div>
+          <div class="summary__row">
+            <span class="label">Source</span>
+            <span class="value" id="sum-estate">Invergeldie</span>
+          </div>
+          <div class="summary__row">
+            <span class="label">Volume</span>
+            <span class="value" id="sum-volume">26 tCO₂e</span>
+          </div>
+          <div class="summary__row">
+            <span class="label">Vintage</span>
+            <span class="value" id="sum-vintage">2027–2032</span>
+          </div>
+          <div class="summary__row">
+            <span class="label">Status</span>
+            <span class="value" id="sum-status">Pending Issuance Unit</span>
+          </div>
+          <div class="summary__row">
+            <span class="label">Unit price</span>
+            <span class="value" id="sum-unit">£100/tCO₂e</span>
+          </div>
+          <div class="summary__row summary__total">
+            <span class="label" style="font-size: 13px;">Total</span>
+            <span class="value" id="sum-total">£2,600</span>
+          </div>
+          <p class="summary__note" id="sum-note">Vintage verified 2032. Covenant registered on land title. 100-year insured commitment.</p>
+          <div style="margin-top: 32px;">
+            <button class="cta cta--light" id="buy-btn">Purchase — Review Certificate</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==========================================================
+     PAGE: MY IMPACT — DASHBOARD
+     ========================================================== -->
+<main class="page" id="page-impact">
+
+  <section class="dash" style="padding-top: 140px;">
+    <div class="dash__hd">
+      <p class="eyebrow" style="opacity: 0.55; margin-bottom: 16px;">My Impact · Account #OC-D2C-000128</p>
+      <h1>Your credit. Your land. Your proof.</h1>
+      <p>Every credit you hold is pinned to a specific estate, a specific vintage, and a specific covenant on land we own. Updated continuously by Oxygen Intelligence.</p>
+    </div>
+
+    <div class="dash__grid">
+      <div class="dash__map">
+        <p class="dash__map__title">Your Estate · Invergeldie · Perthshire</p>
+        <div class="dash__pin"></div>
+        <p class="dash__pin-label">56.42°N, 4.09°W</p>
+        <p class="dash__map__foot">Geo-tagged · LiDAR-verified · Live feed</p>
+      </div>
+      <div class="dash__side">
+        <h3>This year</h3>
+        <div class="dash__metric">
+          <div class="dash__metric__v">26.0 t</div>
+          <div class="dash__metric__l">CO₂e secured on covenanted land</div>
+        </div>
+        <div class="dash__metric">
+          <div class="dash__metric__v">9</div>
+          <div class="dash__metric__l">UN SDGs contributed to</div>
+        </div>
+        <div class="dash__metric">
+          <div class="dash__metric__v">100 yrs</div>
+          <div class="dash__metric__l">Insured commitment period</div>
+        </div>
+        <div class="dash__metric" style="border-bottom: 0;">
+          <div class="dash__metric__v">1.2 km²</div>
+          <div class="dash__metric__l">Habitat restoration represented</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash__credits">
+      <h2>Your Credits</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Estate</th>
+            <th>Type</th>
+            <th>Vintage</th>
+            <th>Status</th>
+            <th>Volume</th>
+            <th>Covenant</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Invergeldie</td>
+            <td>Peatland (PCC)</td>
+            <td>2027–2032</td>
+            <td><span class="tag">Pending</span></td>
+            <td>26 tCO₂e</td>
+            <td>INV-PCC-0422</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top: 80px;">
+      <p class="eyebrow" style="opacity: 0.55; margin-bottom: 16px;">Oxygen Escapes</p>
+      <h2 class="slab__statement" style="font-size: clamp(24px, 3vw, 40px);">
+        You hold credit on Invergeldie. <span class="muted">You can stay on Invergeldie.</span>
+      </h2>
+      <div style="margin-top: 32px;">
+        <button class="cta">Check Availability</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==========================================================
+     PAGE: GIFT
+     ========================================================== -->
+<main class="page" id="page-gift">
+
+  <section class="slab" style="padding-top: 160px;">
+    <p class="eyebrow" style="margin-bottom: 28px; opacity: 0.6;">Gift a Credit</p>
+    <h1 class="slab__statement">
+      Give a piece of Britain back. <span class="muted">On land we own. Traceable forever.</span>
+    </h1>
+    <p class="slab__lede">
+      Every credit is geo-tagged, LiDAR-verified, covenant-protected for 100 years. The most considered climate gift you can give — not a token, not a promise, a legally-registered stake in a specific British landscape.
+    </p>
+  </section>
+
+  <section class="calc" style="background: var(--paper); color: var(--ink);">
+    <div class="form">
+      <div>
+        <p class="eyebrow" style="opacity: 0.6; margin-bottom: 24px;">The Details</p>
+        <h2 class="calc__title" style="color: var(--ink);">Who is this for?</h2>
+
+        <div class="field">
+          <label for="g-name">Recipient name</label>
+          <input type="text" id="g-name" placeholder="e.g. Sarah Henderson" />
+        </div>
+        <div class="field">
+          <label for="g-email">Recipient email</label>
+          <input type="email" id="g-email" placeholder="sarah@example.co.uk" />
+        </div>
+        <div class="field">
+          <label for="g-date">Delivery date</label>
+          <input type="text" id="g-date" placeholder="25 December 2026" />
+        </div>
+        <div class="field">
+          <label for="g-tier">Gift tier</label>
+          <select id="g-tier">
+            <option value="plot">The Plot — £95 (1 verified credit)</option>
+            <option value="plot10">The Plot x10 — £850 (10 verified credits)</option>
+            <option value="household">The Household — from £2,600 (full-year offset)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="g-estate">Source estate</label>
+          <select id="g-estate">
+            <option value="invergeldie">Invergeldie — Perthshire, Scotland</option>
+            <option value="leighon">Leighon — Dartmoor, Devon</option>
+            <option value="wood-advent">Wood Advent — Exmoor, Somerset</option>
+            <option value="siblyback">Siblyback — Cornwall</option>
+            <option value="swineley">Swineley — Yorkshire Dales</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="g-msg">Personal message</label>
+          <textarea id="g-msg" placeholder="A century of protected land, on the estate where your family walked."></textarea>
+        </div>
+        <div class="field">
+          <label>Pair with</label>
+          <select>
+            <option>Certificate only</option>
+            <option>+ Hardback copy of Scaling Conservation (+£22)</option>
+            <option>+ 1-night Oxygen Escapes stay (from £285)</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <p class="eyebrow" style="opacity: 0.6; margin-bottom: 24px;">Certificate Preview</p>
+
+        <div class="cert">
+          <div class="cert__hd">
+            <span>Oxygen Conservation</span>
+            <span>Premium UK Credit</span>
+          </div>
+          <div>
+            <div class="cert__title">A credit on <span id="g-cert-estate">Invergeldie</span>, held in trust for a century.</div>
+            <div class="cert__recipient">For <span id="g-cert-name">the recipient</span></div>
+          </div>
+          <div class="cert__ft">
+            <div>Vintage<span>2027–2032</span></div>
+            <div>Covenant<span>INV-PCC-0442</span></div>
+            <div>Geo-tag<span>56.42°N, 4.09°W</span></div>
+          </div>
+        </div>
+
+        <p style="margin-top: 24px; font-size: 14px; opacity: 0.65; line-height: 1.5;">
+          Delivered as a digital certificate on the chosen date, with a live link to the estate dashboard, LiDAR imagery of the credit's location, and the recipient's own My Impact account.
+        </p>
+
+        <div style="margin-top: 40px;">
+          <button class="cta" id="g-btn">Review &amp; Send Gift</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==========================================================
+     PAGE: FOR BUSINESS
+     ========================================================== -->
+<main class="page" id="page-business">
+
+  <section class="hero" style="min-height: 70vh;">
+    <div class="hero__bg" style="background-image: url('https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=2400&q=80');"></div>
+    <div class="hero__content">
+      <p class="hero__eyebrow">For Business</p>
+      <h1 class="hero__title">Give Your Team<br/>Proof, Not Perks</h1>
+      <p class="hero__sub">Offer employees the UK's only premium, geo-tagged, covenant-backed carbon benefit — delivered through existing salary-sacrifice infrastructure.</p>
+    </div>
+  </section>
+
+  <section class="slab">
+    <p class="eyebrow" style="margin-bottom: 28px; opacity: 0.6;">The Proposition</p>
+    <h2 class="slab__statement">
+      Climate benefits shouldn't be greenwash. <span class="muted">They should be traceable to a tree.</span>
+    </h2>
+    <p class="slab__lede">
+      Offered as a salary-sacrifice benefit, every employee can offset their household footprint at Carbon Curve pricing — with full transparency of the estate, vintage, and LiDAR verification behind every tonne. Administered through your existing benefits platform.
+    </p>
+  </section>
+
+  <section class="stats">
+    <div class="stat stat--acres">
+      <div class="stat__bg"></div>
+      <p class="stat__number">170+</p>
+      <p class="stat__desc">UK companies already use salary-sacrifice carbon benefits</p>
+      <span class="stat__label">Infrastructure Exists</span>
+    </div>
+    <div class="stat stat--credits">
+      <div class="stat__bg"></div>
+      <p class="stat__number">63%</p>
+      <p class="stat__desc">of UK Gen Z and 62% of millennials will pay more for ethical employers</p>
+      <span class="stat__label">Talent Signal</span>
+    </div>
+    <div class="stat stat--price">
+      <div class="stat__bg"></div>
+      <p class="stat__number">Tax-efficient</p>
+      <p class="stat__desc">salary-sacrifice model means employees pay less, impact costs less</p>
+      <span class="stat__label">Structure</span>
+    </div>
+  </section>
+
+  <section class="calc" style="background: var(--paper); color: var(--ink);">
+    <div class="form">
+      <div>
+        <p class="eyebrow" style="opacity: 0.6; margin-bottom: 24px;">Register Interest</p>
+        <h2 class="calc__title" style="color: var(--ink);">We'll be in touch within 48 hours.</h2>
+        <p class="calc__lede" style="color: var(--ink); opacity: 0.7;">Tell us about your business and benefits platform. We'll come back with an indicative scope and pricing.</p>
+
+        <div class="field">
+          <label for="b-company">Company</label>
+          <input type="text" id="b-company" placeholder="e.g. Burges Salmon" />
+        </div>
+        <div class="field">
+          <label for="b-name">Your name</label>
+          <input type="text" id="b-name" placeholder="Full name" />
+        </div>
+        <div class="field">
+          <label for="b-email">Work email</label>
+          <input type="email" id="b-email" placeholder="name@company.co.uk" />
+        </div>
+        <div class="field">
+          <label for="b-size">Headcount</label>
+          <select id="b-size">
+            <option>Under 100</option>
+            <option>100–500</option>
+            <option>500–1,000</option>
+            <option>1,000–5,000</option>
+            <option>5,000+</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="b-platform">Existing benefits platform</label>
+          <select id="b-platform">
+            <option>Vebnet</option>
+            <option>Reward Gateway</option>
+            <option>Benefex</option>
+            <option>Thanks Ben</option>
+            <option>None / Not sure</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="b-notes">Anything we should know</label>
+          <textarea id="b-notes" placeholder="Net-zero commitments, benefits cycle, existing partners..."></textarea>
+        </div>
+
+        <div style="margin-top: 32px;">
+          <button class="cta" id="b-btn">Register Interest</button>
+        </div>
+      </div>
+
+      <div>
+        <p class="eyebrow" style="opacity: 0.6; margin-bottom: 24px;">How It Works</p>
+
+        <div style="border-top: 1px solid var(--hairline); padding: 24px 0;">
+          <div class="eyebrow" style="opacity: 0.6; margin-bottom: 8px;">01 · Onboard</div>
+          <p style="font-size: 17px; font-weight: 300; line-height: 1.5;">We integrate with your existing benefits provider. No new portal. No new logins for staff.</p>
+        </div>
+        <div style="border-top: 1px solid var(--hairline); padding: 24px 0;">
+          <div class="eyebrow" style="opacity: 0.6; margin-bottom: 8px;">02 · Employees Choose</div>
+          <p style="font-size: 17px; font-weight: 300; line-height: 1.5;">Staff select their tier and estate. Salary-sacrificed monthly. Certificate issued instantly.</p>
+        </div>
+        <div style="border-top: 1px solid var(--hairline); padding: 24px 0;">
+          <div class="eyebrow" style="opacity: 0.6; margin-bottom: 8px;">03 · Deliver At Scale</div>
+          <p style="font-size: 17px; font-weight: 300; line-height: 1.5;">Credits sourced across the 50,000-acre portfolio. Full estate transparency. ESG-reportable.</p>
+        </div>
+        <div style="border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); padding: 24px 0;">
+          <div class="eyebrow" style="opacity: 0.6; margin-bottom: 8px;">04 · Report &amp; Share</div>
+          <p style="font-size: 17px; font-weight: 300; line-height: 1.5;">Aggregated company dashboard. Employee impact feed. SDG-aligned reporting for your annual accounts.</p>
+        </div>
+
+        <p style="margin-top: 32px; font-size: 14px; opacity: 0.6; line-height: 1.6;">
+          Modelled on the UK's established PURE / Vebnet payroll-carbon framework, already live in 170+ British companies. Scoped for pilot cohorts from 50 employees.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==========================================================
+     PAGE: ABOUT
+     ========================================================== -->
+<main class="page" id="page-about">
+
+  <section class="slab" style="padding-top: 160px;">
+    <p class="eyebrow" style="margin-bottom: 28px; opacity: 0.6;">About</p>
+    <h1 class="slab__statement">
+      We are not building projects. <span class="muted">We are building the infrastructure for natural capital at scale.</span>
+    </h1>
+    <p class="slab__lede">
+      Oxygen Conservation was founded in 2021 to do one thing: acquire and restore large-scale British landscapes, generating premium natural capital credits as the commercial engine for lasting ecological recovery. Impact first. Profit as the result, not the purpose.
+    </p>
+  </section>
+
+  <section class="stats">
+    <div class="stat stat--acres">
+      <div class="stat__bg"></div>
+      <p class="stat__number">~50,000</p>
+      <p class="stat__desc">acres of UK land owned and managed</p>
+      <span class="stat__label">Portfolio</span>
+    </div>
+    <div class="stat stat--credits">
+      <div class="stat__bg"></div>
+      <p class="stat__number">£400m</p>
+      <p class="stat__desc">working portfolio valuation (2025)</p>
+      <span class="stat__label">Assets</span>
+    </div>
+    <div class="stat stat--lidar">
+      <div class="stat__bg"></div>
+      <p class="stat__number">~50</p>
+      <p class="stat__desc">people across science, finance, data, property</p>
+      <span class="stat__label">Team</span>
+    </div>
+  </section>
+
+  <section class="slab">
+    <p class="eyebrow" style="margin-bottom: 28px; opacity: 0.6;">The Journey</p>
+    <h2 class="slab__statement" style="font-size: clamp(28px, 3.5vw, 44px);">Four years. Nine estates. One founding thesis.</h2>
+
+    <div class="timeline">
+      <div class="timeline__item">
+        <div class="timeline__year">2021</div>
+        <div class="timeline__title">Where it All Started</div>
+        <p class="timeline__body">Founded on 2 June 2021. The Green Print — a 30,000-word founding document — laid out how to build a commercial enterprise delivering positive environmental and social impact first, with profit as a result, not the purpose. Five estates acquired: Leighon, Wood Advent, Swineley, Esgair Arth, Firth of Tay.</p>
+      </div>
+      <div class="timeline__item">
+        <div class="timeline__year">2022</div>
+        <div class="timeline__title">From Concept to Reality</div>
+        <p class="timeline__body">Two landmark Scottish acquisitions — Invergeldie (11,701 acres) and Blackburn &amp; Hartsgarth (11,407 acres) — changed the scale of everything. Award-winning debt funding package from Triodos Bank proved this model was bankable.</p>
+      </div>
+      <div class="timeline__item">
+        <div class="timeline__year">2023</div>
+        <div class="timeline__title">Balancing the Portfolio</div>
+        <p class="timeline__body">Added Mornacott (Devon) and Shropham (Norfolk) — property, ecotourism, and BNG potential. The Oxygen Escapes ecotourism brand began to take shape. Every tree GPS-mapped; the evidentiary standard that would later command record prices.</p>
+      </div>
+      <div class="timeline__item">
+        <div class="timeline__year">2024</div>
+        <div class="timeline__title">Testing the Model</div>
+        <p class="timeline__body">Siblyback (Cornwall) and Project Skyfall (15,035 acres, Cairngorms) pushed the portfolio to 45,000 acres. 220 acres of new native woodland. 23,000 native trees planted at Leighon alone.</p>
+      </div>
+      <div class="timeline__item">
+        <div class="timeline__year">2025</div>
+        <div class="timeline__title">Finding the Voice</div>
+        <p class="timeline__body">A transaction achieved a world-record £125/tonne price for Woodland Carbon Credits — because we could prove every single step in the chain. Portfolio approaching £400m. Foundations laid for Oxygen Capital (institutional capital) and Oxygen Intelligence (data platform).</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 48px;">
+      <button class="cta" data-page="estate">Explore the Estates</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==========================================================
+     PAGE: CRITICISE US
+     ========================================================== -->
+<main class="page" id="page-criticise">
+
+  <section class="slab slab--dark" style="padding-top: 160px;">
+    <p class="eyebrow cta--light" style="margin-bottom: 28px; opacity: 0.6;">Criticise Us</p>
+    <h1 class="slab__statement">
+      Tell us we're wrong. <span class="muted">Then watch what we do about it.</span>
+    </h1>
+    <p class="slab__lede">
+      No other carbon platform publishes its critics. We do — because the failure modes of this market are how we got here, and hiding from them is how it stays broken.
+    </p>
+    <p class="slab__lede" style="margin-top: 20px;">
+      Every critique submitted here is read. The substantive ones are published — alongside our response, and what we changed.
+    </p>
+  </section>
+
+  <section class="calc" style="background: var(--paper); color: var(--ink);">
+    <div class="form">
+      <div>
+        <p class="eyebrow" style="opacity: 0.6; margin-bottom: 24px;">Your Critique</p>
+        <h2 class="calc__title" style="color: var(--ink);">What are we getting wrong?</h2>
+        <p class="calc__lede" style="color: var(--ink); opacity: 0.7;">Methodology. Pricing. Claims. Governance. Impact math. Language. We publish the sharp ones.</p>
+
+        <div class="field">
+          <label for="c-subject">Subject</label>
+          <select id="c-subject">
+            <option>Credit methodology</option>
+            <option>Pricing / the Carbon Curve</option>
+            <option>Additionality claims</option>
+            <option>MRV / LiDAR approach</option>
+            <option>Land acquisition ethics</option>
+            <option>Consumer-facing claims</option>
+            <option>Something else</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="c-critique">Your critique</label>
+          <textarea id="c-critique" placeholder="Be as specific as you can. Link to sources." style="min-height: 200px;"></textarea>
+        </div>
+        <div class="field">
+          <label for="c-name">Name (optional — anonymous accepted)</label>
+          <input type="text" id="c-name" placeholder="Leave blank to submit anonymously" />
+        </div>
+        <div class="field">
+          <label for="c-email">Email (only if you want a response)</label>
+          <input type="email" id="c-email" placeholder="optional" />
+        </div>
+
+        <div style="margin-top: 32px;">
+          <button class="cta" id="c-btn">Submit Critique</button>
+        </div>
+      </div>
+
+      <div>
+        <p class="eyebrow" style="opacity: 0.6; margin-bottom: 24px;">Recent Critiques</p>
+
+        <div class="critique">
+          <div class="critique__meta">
+            Pricing<br/>
+            March 2026
+          </div>
+          <div class="critique__body">
+            <h4>"Your £125/t price is not what most UK credits trade at. This is cherry-picking."</h4>
+            <p>Submitted by an anonymous institutional buyer. The Beyond Carbon transaction was a negotiated deal with unusual co-benefits. Not representative of market floor.</p>
+            <p class="resp"><strong style="font-weight: 500;">Our response:</strong> Fair. We've updated pricing language across the site to distinguish "proof-point transactions" from "market average", and added the Carbon Curve as the benchmark for forward pricing rather than quoting individual deals as generalisable.</p>
+          </div>
+        </div>
+
+        <div class="critique">
+          <div class="critique__meta">
+            Methodology<br/>
+            February 2026
+          </div>
+          <div class="critique__body">
+            <h4>"Individual-tree LiDAR is expensive overkill. Customers don't care about cm precision."</h4>
+            <p>Submitted by Dr. M. Rees, independent carbon methodologist. Argues consumer-facing claim complexity exceeds regulatory need.</p>
+            <p class="resp"><strong style="font-weight: 500;">Our response:</strong> Disagree — but sharpened the language. The LiDAR precision is load-bearing for institutional buyers and the evidentiary spine of the whole operation. For consumer UX, we've added a plain-English explanation layer without removing the underlying detail.</p>
+          </div>
+        </div>
+
+        <div class="critique">
+          <div class="critique__meta">
+            Claims<br/>
+            January 2026
+          </div>
+          <div class="critique__body">
+            <h4>"'The highest quality carbon credits in the world' is an unsupportable claim."</h4>
+            <p>Submitted by a climate NGO. Argues the claim is marketing hyperbole and requires a specific source or third-party verification.</p>
+            <p class="resp"><strong style="font-weight: 500;">Our response:</strong> Accepted. The claim is now sourced to independent rating (BeZero / Sylvera public ratings of UK nature-based credits from OC's portfolio, 2025). Where the ratings change, the claim will change.</p>
+          </div>
+        </div>
+
+        <p style="margin-top: 32px; font-size: 14px; opacity: 0.6; line-height: 1.6;">
+          Critiques published here are edited only for length and clarity. Nothing is filtered for tone.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==========================================================
+     FOOTER
+     ========================================================== -->
+<footer>
+  <div class="foot__grid">
+    <div>
+      <h4>Oxygen Conservation — D2C</h4>
+      <p style="max-width: 420px; font-weight: 300; opacity: 0.75;">
+        Premium UK nature-based carbon credits. Built on 50,000 acres of landscape we own and manage. Priced at the Curve.
+      </p>
+    </div>
+    <div>
+      <h4>The Platform</h4>
+      <a>The Land</a>
+      <a>Buy</a>
+      <a>My Impact</a>
+      <a>For Business</a>
+      <a>Gift a Credit</a>
+    </div>
+    <div>
+      <h4>Transparency</h4>
+      <a>The Carbon Curve</a>
+      <a>Criticise Us</a>
+      <a>Second Nature Podcast</a>
+      <a>Scaling Conservation</a>
+      <a>Annual Reports</a>
+    </div>
+  </div>
+  <div class="foot__bottom">
+    <span>Confidential · D2C Prototype v1</span>
+    <span>Pulling from: OC Carbon Curve 2025, Final Deck v2, Woodland Carbon Timeline</span>
+  </div>
+</footer>
+
+<!-- ==========================================================
+     SCRIPT
+     ========================================================== -->
 <script>
-const modules = [
-  {
-    num:"01", title:"D2C carbon credit sales", color:"#1A7A5C",
-    folder:"~/OC-Sales-Agent/d2c-sales/",
-    desc:"The customer-facing module. Initially built as an internal prototype to test and refine before any public launch. Once validated, it could eventually live on a holding page where individuals discover, evaluate, and purchase premium carbon credits from OC estates.",
-    protoNote:"Phase 1 is a prototype only \u2014 no public launch. We\u2019ll test internally and only consider a public-facing version once Rich is happy with the quality of output.",
-    files:[
-      ["estate-profiles/","Swineley, Wood Advent, etc. \u2014 project fact sheets, verification data, photography"],
-      ["oc-pricing-strategy.md","OC Carbon Curve 2025 \u2014 projections across Standard, High, and Premium tiers"],
-      ["buyer-segments.md","profiles and approach for values-driven, UHNW, and small business buyers"],
-      ["sales-playbook.md","qualification framework, objection handling, competitor differentiation"]
-    ],
-    instructions:"You are OC\u2019s senior commercial advisor for direct individual sales. You help people discover, evaluate, and purchase premium carbon credits from OC estates.\n\nTone: confident, warm, never overselling. You know every estate intimately.\n\nFor every conversation:\n1. Understand the buyer\u2019s motivation (offset, values, investment, legacy)\n2. Match them to the right project(s)\n3. If they signal UHNW interest (\u00A310k+), flag for Rich/Matt immediately\n4. Never make claims you can\u2019t back with verification data\n5. Reference OC\u2019s three-tier pricing (Standard, High, Premium) from the Carbon Curve",
-    scheduled:[["Weekly","Web search for carbon market pricing updates and OC competitor news"]],
-    output:"Buyer qualification notes, draft responses, UHNW flagging alerts, project comparison documents"
-  },
-  {
-    num:"02", title:"Investor research + targeting", color:"#5B52B0",
-    folder:"~/OC-Sales-Agent/institutional-research/",
-    desc:"The research engine. Profiles key investor segments \u2014 starting with the Foresight 68 (\u00A33 trillion AUM) \u2014 identifies contacts and maps warm introduction paths through OC\u2019s network.",
-    files:[
-      ["our-network.md","existing OC contacts, board connections, and friendly introduction paths"],
-      ["target-profiles/","individual institution profiles built and maintained by the agent"],
-      ["research-outputs/","prioritised target lists, analysis documents, intro maps"]
-    ],
-    instructions:"You are OC\u2019s institutional research analyst. Your job is to profile pension funds, sovereign wealth funds, and asset managers \u2014 identifying who to target and how to reach them.\n\nFor each institution, build a profile covering:\n- AUM, allocation to natural capital/ESG\n- Key decision-makers (CIO, head of alternatives, sustainability lead)\n- Existing relationships in OC\u2019s network\n- Suggested approach and warm intro path\n\nAlways use web search to get the latest data. Flag any institution that has publicly stated natural capital interest.",
-    scheduled:[
-      ["Weekly","Web search top-10 targets for news, personnel changes, allocation updates"],
-      ["Monthly","Regenerate the prioritised target list based on new intel"]
-    ],
-    output:"Institutional profiles, prioritised target lists, warm introduction maps, research briefings"
-  },
-  {
-    num:"03", title:"Outreach + relationship building", color:"#C04E25",
-    folder:"~/OC-Sales-Agent/outreach/",
-    desc:"The outreach coordinator. Takes targets from Module 2 and drafts emails, LinkedIn messages, call prep notes, and follow-up sequences. Where Rich\u2019s question \u2014 \u2018what\u2019s the best approach to get great conversations with a pension company?\u2019 \u2014 gets answered.",
-    files:[
-      ["outreach-templates/","email and LinkedIn templates by segment (institutional, UHNW, intro request)"],
-      ["call-prep/","pre-call briefing templates and meeting prep frameworks"],
-      ["tone-guide.md","OC voice, Rich\u2019s style, what to avoid"],
-      ["outreach-log.md","what\u2019s been sent, responses received, follow-ups due"]
-    ],
-    instructions:"You are OC\u2019s outreach coordinator. You draft emails, LinkedIn messages, call prep notes, and follow-up sequences for both institutional and UHNW targets.\n\nRules:\n- Match OC\u2019s tone: authoritative, understated, never salesy\n- Always reference something specific about the recipient (from their profile)\n- Suggest 2\u20133 message variants so Matt/Rich can choose\n- Track what\u2019s been sent and when follow-ups are due\n- For pension funds: lead with alignment, not product",
-    scheduled:[
-      ["Daily","Check outreach-log.md for follow-ups due today"],
-      ["Weekly","Draft next batch of outreach messages for top-5 targets"]
-    ],
-    output:"Email drafts, LinkedIn messages, call prep briefings, follow-up reminders"
-  },
-  {
-    num:"04", title:"Commercial strategy + planning", color:"#A06B14",
-    folder:"~/OC-Sales-Agent/strategy/",
-    desc:"The strategist. Stress-tests commercial decisions, models the multi-tier sales approach, and simulates the Head of Commercial role before making the hire.",
-    files:[
-      ["oc-business-plan.pdf","current OC strategy and financial model"],
-      ["sales-channel-plan.md","hyperscaler, ZIP, UHNW club, D2C tier planning"],
-      ["head-of-commercial-jd.md","draft job description \u2014 evolves as the agent learns what the role needs"],
-      ["market-context/","VCM reports, pricing benchmarks, regulatory updates"]
-    ],
-    instructions:"You are OC\u2019s commercial strategist. You help Rich and Matt stress-test business decisions, model sales channels, and simulate what a Head of Commercial role would look like.\n\nCapabilities:\n- Scenario planning: \u2018what if we focus on UHNW only vs broad D2C?\u2019\n- Role simulation: \u2018what would a Head of Commercial prioritise in month 1?\u2019\n- Pipeline modelling: \u2018how many D2C buyers lead to UHNW leads to investors?\u2019\n- Channel analysis: \u2018which tier has highest ROI for time spent?\u2019\n\nAlways ground analysis in OC\u2019s actual numbers and market data. Challenge assumptions.",
-    scheduled:[
-      ["Monthly","Web search for VCM market updates, regulatory changes, competitor moves"],
-      ["Monthly","Update pipeline model assumptions based on latest data"]
-    ],
-    output:"Strategy memos, scenario analyses, Head of Commercial role simulations, pipeline models, channel plans"
+  /* -------- Simple page router -------- */
+  const pages = ['home','estate','buy','gift','business','impact','about','criticise'];
+  function goTo(page) {
+    pages.forEach(p => {
+      document.getElementById('page-' + p).classList.toggle('page--active', p === page);
+    });
+    document.querySelectorAll('.nav__link').forEach(n => {
+      n.classList.toggle('nav__link--active', n.dataset.page === page);
+    });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }
-];
-
-let currentModule = -1;
-let currentTab = "overview";
-
-function selectModule(i){
-  // Update card states
-  document.querySelectorAll('.card').forEach((c,idx)=>{
-    c.classList.toggle('active', idx===i);
+  document.querySelectorAll('[data-page]').forEach(el => {
+    el.addEventListener('click', () => goTo(el.dataset.page));
   });
-  currentModule = i;
-  currentTab = "overview";
-  renderModule();
-}
 
-function selectTab(t){
-  currentTab = t;
-  renderModule();
-}
+  /* -------- Nav colour shift on scroll -------- */
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('nav--scrolled', window.scrollY > 60);
+  });
 
-function closeDetail(){
-  document.getElementById('detail').style.display = 'none';
-  document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-  currentModule = -1;
-}
-
-function renderModule(){
-  const m = modules[currentModule];
-  if(!m) return;
-  const el = document.getElementById('detail');
-  el.style.display = 'block';
-  el.style.setProperty('--c', m.color);
-
-  const tabData = [
-    {id:"overview",label:"Priority folder contents"},
-    {id:"instructions",label:"System prompt"},
-    {id:"scheduled",label:"Scheduled tasks"},
-    {id:"outputs",label:"Outputs"}
+  /* -------- Estate inventory (Invergeldie, from Woodland Carbon Timeline) -------- */
+  // Grouped into vintage "bands" for prototype clarity
+  const INVERGELDIE_INVENTORY = [
+    { vintage: '2027–2032', type: 'Peatland (PCC)', volume: 3753,  status: 'Pending', price: 100 },
+    { vintage: '2029–2042', type: 'Woodland (WCC)', volume: 4170,  status: 'Pending', price: 100 },
+    { vintage: '2032–2042', type: 'Peatland (PCC)', volume: 7573,  status: 'Pending', price: 110 },
+    { vintage: '2042–2052', type: 'Woodland (WCC)', volume: 13210, status: 'Pending', price: 130 },
+    { vintage: '2052–2062', type: 'Peatland (PCC)', volume: 7573,  status: 'Pending', price: 145 },
+    { vintage: '2062–2080', type: 'Woodland (WCC)', volume: 18540, status: 'Pending', price: 160 }
   ];
 
-  let html = `
-    <div class="detail-header">
-      <div class="detail-num" style="color:${m.color}">${m.num}</div>
-      <div style="flex:1">
-        <div class="detail-title">${m.title}</div>
-        <div class="detail-folder">${m.folder}</div>
-      </div>
-      <button class="close-btn" onclick="closeDetail()">&times; Close</button>
-    </div>
-    <div class="detail-desc">${m.desc}</div>
-    ${m.protoNote ? `<div class="proto-note"><strong>Note:</strong> ${m.protoNote}</div>` : ''}
-    <div class="tabs">
-      ${tabData.map(t=>`<button class="tab-btn ${currentTab===t.id?'active':''}" onclick="selectTab('${t.id}')">${t.label}</button>`).join('')}
-    </div>
-  `;
-
-  if(currentTab==="overview"){
-    html += `<div class="section-label">Priority folder contents</div>`;
-    html += m.files.map(f=>`
-      <div class="file-row">
-        <span class="file-name" style="color:${m.color}">${f[0]}</span>
-        <span class="file-desc">${f[1]}</span>
+  function renderInventory() {
+    const grid = document.getElementById('estate-inventory');
+    if (!grid) return;
+    grid.innerHTML = INVERGELDIE_INVENTORY.map(row => `
+      <div class="process__step">
+        <span class="process__step__num">${row.vintage}</span>
+        <h4>${row.type}</h4>
+        <p><strong style="font-weight: 500;">${row.volume.toLocaleString()} tCO₂e</strong> available<br/>
+        <span style="opacity: 0.65;">Indicative price: £${row.price}/t</span><br/>
+        <span class="tag" style="margin-top: 12px;">${row.status}</span></p>
       </div>
     `).join('');
   }
-  if(currentTab==="instructions"){
-    html += `<div class="section-label">Project instructions</div>`;
-    html += `<div class="code-block">${m.instructions}</div>`;
-    html += `<div class="code-note">These load automatically every time you open this Cowork Project.</div>`;
-  }
-  if(currentTab==="scheduled"){
-    html += `<div class="section-label">Automated tasks</div>`;
-    html += m.scheduled.map(s=>`
-      <div class="sched-card" style="--c:${m.color};border-left-color:${m.color}">
-        <div class="sched-freq" style="color:${m.color}">${s[0]}</div>
-        <div class="sched-desc">${s[1]}</div>
+  renderInventory();
+
+  /* -------- Tier definitions -------- */
+  const TIERS = {
+    plot: {
+      name: 'The Plot',
+      eyebrow: 'Entry',
+      price: 95,
+      priceNote: 'One verified credit · geo-tagged',
+      desc: 'A single premium credit pinned to a specific tree or hectare of peatland. Giftable. Perfect first step.',
+      specs: [
+        ['Volume', '1 tCO₂e'],
+        ['Source', 'Any estate'],
+        ['Vintage', 'Verified, next-available'],
+        ['Covenant', '100-year, land title'],
+        ['Pair with', 'Scaling Conservation book (gift)']
+      ]
+    },
+    household: {
+      name: 'The Household',
+      eyebrow: 'Core',
+      price: 100, // £/t anchored to Curve 2028
+      priceNote: '£100/tCO₂e · Carbon Curve 2028 anchor',
+      desc: 'Offset a full UK household footprint. Annual commitment. Blended verified + pending portfolio.',
+      specs: [
+        ['Volume', '26 tCO₂e / year'],
+        ['Source', 'Your chosen estate'],
+        ['Vintage', 'Blend, 2027+'],
+        ['Covenant', '100-year, land title'],
+        ['Pair with', 'Oxygen Escapes stay']
+      ]
+    },
+    legacy: {
+      name: 'The Legacy',
+      eyebrow: 'Premium',
+      price: 150, // £/t anchored to Curve 2030
+      priceNote: '£150/tCO₂e · Carbon Curve 2030 anchor',
+      desc: 'Five-year forward commitment on premium pending credits. Price locked today. Inheritance-grade proof.',
+      specs: [
+        ['Volume', '130 tCO₂e (5 years)'],
+        ['Source', 'Dedicated parcel'],
+        ['Vintage', 'Forward, 2032+'],
+        ['Covenant', 'Perpetuity option'],
+        ['Pair with', 'Named parcel + annual stay']
+      ]
+    }
+  };
+
+  function renderTiers() {
+    const grid = document.getElementById('tier-grid');
+    if (!grid) return;
+    grid.innerHTML = Object.entries(TIERS).map(([key, t]) => `
+      <div class="tier" data-tier="${key}">
+        <span class="tier__eyebrow">${t.eyebrow}</span>
+        <h3 class="tier__name">${t.name}</h3>
+        <div class="tier__price">£${t.price.toLocaleString()}${key==='plot' ? '' : '<small> / tCO₂e</small>'}</div>
+        <p class="tier__price-note">${t.priceNote}</p>
+        <p class="tier__desc">${t.desc}</p>
+        <ul class="tier__specs">
+          ${t.specs.map(s => `<li><span>${s[0]}</span><span>${s[1]}</span></li>`).join('')}
+        </ul>
+        <span class="tier__cta">Select</span>
       </div>
     `).join('');
-    html += `<div class="code-note">Run automatically while Claude Desktop is open. Type /schedule to set up.</div>`;
+    // click binding
+    grid.querySelectorAll('.tier').forEach(el => {
+      el.addEventListener('click', () => {
+        document.getElementById('tier-select').value = el.dataset.tier;
+        updateSummary();
+        document.querySelector('.calc').scrollIntoView({ behavior: 'smooth' });
+      });
+    });
   }
-  if(currentTab==="outputs"){
-    html += `<div class="section-label">What this module produces</div>`;
-    html += `<div class="output-box">${m.output}</div>`;
+  renderTiers();
+
+  /* -------- Calculator -------- */
+  const LIFESTYLE_MULT = { low: 0.55, average: 1.0, high: 1.45 };
+  const ESTATE_VINTAGES = {
+    invergeldie: '2027–2032', dorback: '2032–2042', bh: '2029–2042',
+    kinrara: '2028–2038', esgair: '2029–2039', siblyback: '2031–2041',
+    'wood-advent': '2025–2035', swineley: '2029–2039'
+  };
+  const ESTATE_NAMES = {
+    invergeldie: 'Invergeldie', dorback: 'Dorback', bh: 'Blackburn & Hartsgarth',
+    kinrara: 'Kinrara', esgair: 'Esgair Arth', siblyback: 'Siblyback',
+    'wood-advent': 'Wood Advent', swineley: 'Swineley'
+  };
+
+  function calcFootprint() {
+    const size = parseInt(document.getElementById('household-size').value);
+    const ls   = document.getElementById('lifestyle').value;
+    // UK average ~26t for 2.4-person household = ~10.8 t/person baseline
+    const perPerson = 10.8 * LIFESTYLE_MULT[ls];
+    return Math.round(size * perPerson);
   }
 
-  el.innerHTML = html;
-  el.scrollIntoView({behavior:'smooth', block:'start'});
-}
+  function updateSummary() {
+    const hh = document.getElementById('household-size').value;
+    document.getElementById('hh-size-val').textContent = hh;
+    const footprint = calcFootprint();
+    document.getElementById('footprint-val').textContent = footprint;
+
+    const tierKey = document.getElementById('tier-select').value;
+    const tier = TIERS[tierKey];
+    const estateKey = document.getElementById('estate-select').value;
+    const estate = ESTATE_NAMES[estateKey];
+    const vintage = ESTATE_VINTAGES[estateKey];
+
+    let volume, total, unitPrice, status, note;
+
+    if (tierKey === 'plot') {
+      volume = 1;
+      unitPrice = tier.price;
+      total = tier.price;
+      status = 'Verified';
+      note = 'One verified credit. Geo-tagged tree or peatland hectare. Delivered as a digital certificate with location and LiDAR render. Perfect for gifting.';
+    } else if (tierKey === 'household') {
+      volume = footprint;
+      unitPrice = tier.price;
+      total = footprint * tier.price;
+      status = 'Pending Issuance Unit';
+      note = `Vintage ${vintage}. Covenant registered on land title. 100-year insured commitment. Purchased at today's price, delivered on verification.`;
+    } else {
+      volume = footprint * 5;
+      unitPrice = tier.price;
+      total = volume * tier.price;
+      status = 'Forward — 5-year';
+      note = `5-year forward commitment. Price locked today at Curve 2030 anchor. Dedicated parcel on ${estate}. Perpetuity covenant available.`;
+    }
+
+    document.getElementById('sum-tier').textContent = tier.name;
+    document.getElementById('sum-estate').textContent = estate;
+    document.getElementById('sum-volume').textContent = volume.toLocaleString() + ' tCO₂e';
+    document.getElementById('sum-vintage').textContent = vintage;
+    document.getElementById('sum-status').textContent = status;
+    document.getElementById('sum-unit').textContent = '£' + unitPrice + '/tCO₂e';
+    document.getElementById('sum-total').textContent = '£' + total.toLocaleString();
+    document.getElementById('sum-note').textContent = note;
+  }
+
+  document.getElementById('household-size').addEventListener('input', updateSummary);
+  document.getElementById('lifestyle').addEventListener('change', updateSummary);
+  document.getElementById('tier-select').addEventListener('change', updateSummary);
+  document.getElementById('estate-select').addEventListener('change', updateSummary);
+
+  document.getElementById('buy-btn').addEventListener('click', () => {
+    alert(
+      "PROTOTYPE — No real payment taken.\n\n" +
+      "In production this would route to checkout, issue a geo-tagged certificate, " +
+      "and add the credit to your My Impact dashboard.\n\n" +
+      "Click 'My Impact' in the nav to preview the post-purchase experience."
+    );
+  });
+
+  updateSummary();
+
+  /* -------- Gift page: live certificate preview -------- */
+  const gName = document.getElementById('g-name');
+  const gEstate = document.getElementById('g-estate');
+  const gCertName = document.getElementById('g-cert-name');
+  const gCertEstate = document.getElementById('g-cert-estate');
+
+  if (gName && gCertName) {
+    const ESTATE_GIFT_NAMES = {
+      invergeldie: 'Invergeldie', leighon: 'Leighon',
+      'wood-advent': 'Wood Advent', siblyback: 'Siblyback', swineley: 'Swineley'
+    };
+    gName.addEventListener('input', () => {
+      gCertName.textContent = gName.value.trim() || 'the recipient';
+    });
+    gEstate.addEventListener('change', () => {
+      gCertEstate.textContent = ESTATE_GIFT_NAMES[gEstate.value] || 'Invergeldie';
+    });
+    document.getElementById('g-btn').addEventListener('click', () => {
+      alert(
+        "PROTOTYPE — No real transaction.\n\n" +
+        "In production: certificate rendered, scheduled for delivery on the chosen date, " +
+        "recipient receives a personalised email with their own My Impact account."
+      );
+    });
+  }
+
+  /* -------- Business page: register interest -------- */
+  const bBtn = document.getElementById('b-btn');
+  if (bBtn) {
+    bBtn.addEventListener('click', () => {
+      alert(
+        "PROTOTYPE — No form submitted.\n\n" +
+        "In production: captured to CRM, team notified, follow-up within 48 hours."
+      );
+    });
+  }
+
+  /* -------- Criticise page -------- */
+  const cBtn = document.getElementById('c-btn');
+  if (cBtn) {
+    cBtn.addEventListener('click', () => {
+      alert(
+        "PROTOTYPE — Critique not stored.\n\n" +
+        "In production: logged, triaged, reviewed weekly. Substantive critiques published with OC's response."
+      );
+    });
+  }
 </script>
+
 </body>
 </html>
